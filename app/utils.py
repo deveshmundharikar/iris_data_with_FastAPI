@@ -10,17 +10,22 @@ scaler_path = os.path.join(BASE_DIR, "..", "model", "scaler.pkl")
 with open(scaler_path, "rb") as f:
     scaler = pickle.load(f)
 
-def preprocess_input(data):
+
+def preprocess_input(input_data):
     """
     Preprocess input features for prediction.
-    
-    Parameters:
-    data : list or array-like
-        [sepal_length, sepal_width, petal_length, petal_width]
-    
+
+    Args:
+        input_data: List or numpy array of shape (4,) containing [sepal_length, sepal_width, petal_length, petal_width]
+
     Returns:
-    np.array : Scaled feature array ready for model prediction
+        numpy.ndarray: Scaled features of shape (1, 4)
     """
-    arr = np.array(data).reshape(1, -1)
-    scaled = scaler.transform(arr)
-    return scaled
+    if not isinstance(input_data, (list, np.ndarray)):
+        raise ValueError("Input must be a list or numpy array")
+    if len(input_data) != 4:
+        raise ValueError("Input must have exactly 4 features")
+
+    # Convert to 2D array and scale
+    input_array = np.array(input_data).reshape(1, -1)
+    return scaler.transform(input_array)

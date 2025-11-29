@@ -6,9 +6,11 @@ from app.utils import preprocess_input
 
 app = FastAPI()
 
+
 # Pydantic model for request body
 class Features(BaseModel):
     features: list[float]
+
 
 # Get current file directory
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +25,7 @@ with open(model_path, "rb") as f:
 def home():
     return {"message": "Welcome to the Iris Classifier API"}
 
+
 @app.post("/predict")
 def predict(data: Features):
     """
@@ -30,10 +33,7 @@ def predict(data: Features):
     """
     processed = preprocess_input(data.features)
     prediction = int(model.predict(processed)[0])
-    
+
     species = ["Setosa", "Versicolor", "Virginica"]
 
-    return {
-        "prediction": prediction,
-        "class_name": species[prediction]
-    }
+    return {"prediction": prediction, "class_name": species[prediction]}
