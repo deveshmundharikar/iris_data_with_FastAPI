@@ -1,0 +1,117 @@
+project/
+│
+├── model/
+│   ├── model.pkl
+│   ├── scaler.pkl        (optional)
+│   └── encoder.pkl       (optional)
+│
+├── app/
+│   ├── main.py           (API file – FastAPI/Flask)
+│   ├── utils.py          (preprocessing functions)
+│   └── __init__.py
+│
+├── data/
+│   ├── raw.csv           (raw dataset)
+│   ├── cleaned.csv       (cleaned dataset)
+│   └── processed.csv
+│
+├── notebooks/
+│   └── model_training.ipynb
+│
+├── requirements.txt
+├── README.md
+└── .gitignore
+
+
+-------------core schema-------------------------------------
+
+project/
+│
+├── model/
+│   ├── model.pkl
+│   └── scaler.pkl
+│
+├── app/
+│   ├── main.py
+│   └── utils.py
+│
+├── notebooks/
+│   └── train_model.py
+│
+├── requirements.txt
+└── README.md
+
+
+
+**********************************My_flow******************************************
+
+
+✔ Step 1 — Train Model
+cd project/notebooks
+python train_model.py
+
+
+This will create:
+
+model/model.pkl  
+model/scaler.pkl
+
+✔ Step 2 — Run API
+cd ../app
+uvicorn main:app --reload
+
+✔ Step 3 — Test API
+
+In browser:
+
+http://127.0.0.1:8000
+
+✔ POST Request Example (Using Postman / Thunder Client)
+POST → /predict
+BODY:
+[5.1, 3.5, 1.4, 0.2]
+
+
+Output:
+
+{
+  "prediction": 0,
+  "class_name": "Setosa"
+}
+
+
+
+
+---------------------------------------*Execution*--------------------------------------------
+
+
+python notebooks/train_model.py     ------------> 1 step 
+
+uvicorn app.main:app --reload       ------------> 2 step 
+    open new terminal 
+      activate venv  
+        $body = @{ features = @(5.1, 3.5, 1.4, 0.2) } | ConvertTo-Json
+        Invoke-RestMethod -Uri "http://127.0.0.1:8000/predict" -Method POST -Body $body -ContentType "application/json"
+
+
+--------------------------------------*Git*-------------------------------------------
+
+echo "# iris_data_with_FastAPI" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/deveshmundharikar/iris_data_with_FastAPI.git
+git push -u origin main
+
+
+
+
+git remote add origin https://github.com/deveshmundharikar/iris_data_with_FastAPI.git
+git branch -M main
+git push -u origin main
+
+
+
+
+---------------------------------Rooknight-----------------------------------------

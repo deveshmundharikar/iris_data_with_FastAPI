@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pyc
+model/
+notebook/*.pkl
+notebook/*.pickle
+
+
+
