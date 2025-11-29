@@ -1,0 +1,17 @@
+[tool.black]
+line-length = 127
+target-version = ['py39']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | _build
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+# Remove this section since you're using pytest.ini

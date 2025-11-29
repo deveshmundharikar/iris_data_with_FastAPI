@@ -4,3 +4,10 @@ numpy
 pandas
 scikit-learn
 pickle-mixin
+pytest
+pytest-cov
+black
+flake8
+pytest-asyncio
+httpx
+python-multipart

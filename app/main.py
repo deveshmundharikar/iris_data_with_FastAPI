@@ -18,9 +18,10 @@ model_path = os.path.join(BASE_DIR, "..", "model", "model.pkl")
 with open(model_path, "rb") as f:
     model = pickle.load(f)
 
+
 @app.get("/")
 def home():
-    return {"message": "Iris Model API is Running"}
+    return {"message": "Welcome to the Iris Classifier API"}
 
 @app.post("/predict")
 def predict(data: Features):

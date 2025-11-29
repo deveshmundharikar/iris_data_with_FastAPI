@@ -1,0 +1,138 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:  # Allow manual triggering
+
+env:
+  PYTHON_VERSION: '3.11'  # Default Python version
+  MODEL_DIR: './model'
+  APP_DIR: './app'
+
+jobs:
+  test:
+    name: Test (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.9', '3.10', '3.11', '3.12']
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+    
+    - name: Cache pip
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black flake8 pytest-asyncio httpx
+    
+    - name: Lint with flake8
+      run: |
+        flake8 ${{ env.APP_DIR }} --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 ${{ env.APP_DIR }} --count --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Format with black
+      run: |
+        black --check --diff ${{ env.APP_DIR }}
+    
+    - name: Run tests
+      run: |
+        python -m pytest ${{ env.APP_DIR }} -v --cov=${{ env.APP_DIR }} --cov-report=xml
+    
+    - name: Upload coverage to Codecov
+      if: matrix.python-version == env.PYTHON_VERSION
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        file: ./coverage.xml
+        fail_ci_if_error: false
+
+  train-model:
+    name: Train and Test Model
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Train model
+      run: |
+        python notebook/train_model.py
+        ls -la ${{ env.MODEL_DIR }}  # Verify model files are created
+    
+    - name: Test model loading
+      run: |
+        python -c "import pickle; import os; \
+                  pickle.load(open(os.path.join('${{ env.MODEL_DIR }}', 'model.pkl'), 'rb')); \
+                  pickle.load(open(os.path.join('${{ env.MODEL_DIR }}', 'scaler.pkl'), 'rb')); \
+                  print('Model and scaler loaded successfully')"
+
+  deploy:
+    name: Deploy
+    needs: [test, train-model]
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Start FastAPI server
+      run: |
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+    
+    - name: Test API endpoint
+      run: |
+        sleep 5  # Give server time to start
+        curl -X POST "http://localhost:8000/predict" \
+          -H "Content-Type: application/json" \
+          -d '{"features": [5.1, 3.5, 1.4, 0.2]}' \
+          -v
+    
+    - name: Deploy to Render (example)
+      if: success()
+      env:
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+      run: |
+        echo "Deployment to Render would happen here"
+        # Example command (uncomment and configure as needed):
+        # curl -X POST "https://api.render.com/deploy" \
+        #   -H "Authorization: Bearer $RENDER_API_KEY" \
+        #   -H "Content-Type: application/json" \
+        #   -d '{"serviceId": "your-service-id"}'

@@ -23,6 +23,32 @@ project/
 └── .gitignore
 
 
+
+--------------ci---------------------------------------------------
+
+deployment_end_to_end/
+├── .github/
+│   └── workflows/
+│       └── ci.yml
+├── app/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── utils.py
+│   └── test/
+│       ├── __init__.py
+│       ├── test_main.py
+│       └── test_utils.py
+├── model/
+│   ├── model.pkl
+│   └── scaler.pkl
+├── notebook/
+│   └── train_model.py
+├── .flake8
+├── .gitignore
+├── pytest.ini
+├── pyproject.toml
+└── requirements.txt
+
 -------------core schema-------------------------------------
 
 project/
@@ -112,6 +138,20 @@ git branch -M main
 git push -u origin main
 
 
+---------------------------ci test ------------------------------------------
 
+# Install test dependencies   
+pip install -r requirements.txt
+
+# Run tests
+pytest -v --cov=app --cov-report=term-missing
+
+
+black --check app/
+flake8 app/
+
+
+
+uvicorn app.main:app --reload
 
 ---------------------------------Rooknight-----------------------------------------
